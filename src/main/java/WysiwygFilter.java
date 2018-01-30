@@ -1,5 +1,6 @@
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
+import org.jsoup.select.Elements;
 
 import java.util.HashMap;
 import java.util.List;
@@ -10,7 +11,7 @@ public class WysiwygFilter {
     private final Map<String, Map<String, String>> configuration;
 
     WysiwygFilter(Map<String, Map<String, String>> configuration) {
-        if(configuration == null){
+        if (configuration == null) {
             configuration = new HashMap<String, Map<String, String>>();
         }
         this.configuration = configuration;
@@ -27,28 +28,32 @@ public class WysiwygFilter {
         for (Element element : elements) {
 
             if (!configuration.containsKey(element.tagName())) {
-                element.remove();
+                element.unwrap();
             }
 
-            leaveAllowedAttributes(element);
+            handleAttributes(element);
         }
 
         return document.body().html();
     }
 
 
-    private void leaveAllowedAttributes(Element element) {
+    private void handleAttributes(Element element) {
         Map<String, String> allowedAttributes = configuration.get(element.tagName());
 
-        if(allowedAttributes == null){
+        if (allowedAttributes == null) {
             allowedAttributes = new HashMap<String, String>();
         }
 
         for (Attribute attribute : element.attributes()) {
+            if(!allowedAttributes.containsKey(attribute.getKey())){
+                element.removeAttr(attribute.getKey());
+            }
+
             String value = allowedAttributes.get(attribute.getKey());
 
-            if (value == null || !value.equals(attribute.getValue())) {
-                element.removeAttr(attribute.getKey());
+            if (value != null) {
+                element.attr(attribute.getKey(), value);
             }
         }
     }
